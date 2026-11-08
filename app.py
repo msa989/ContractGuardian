@@ -8,7 +8,7 @@ st.set_page_config(
     page_title="ContractGuardian - AI Legal Audit", page_icon="🛡️", layout="wide"
 )
 
-# Custom CSS injection to match the sleek Tailwind design aesthetic
+# Custom CSS injection to match modern aesthetic
 st.markdown(
     """
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -144,7 +144,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
-  run_audit = st.button("🚀 Run Security Audit", use_conatiner_width=True)
+  run_audit = st.button("🚀 Run Security Audit", use_container_width=True)
 
 if run_audit:
   if not api_key:
