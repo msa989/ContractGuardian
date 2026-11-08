@@ -78,47 +78,51 @@ with tab2:
 pdf_bytes = uploaded_file.read() if uploaded_file else None
 
 st.divider()
-
 if st.button("🚀 Run Security Audit", type="primary"):
   if not api_key:
     st.error("🔑 API Key is missing. Please add it to Streamlit Secrets.")
   elif not pdf_bytes and not contract_text.strip():
-    st.warning(
-        "⚠️ Please upload a PDF file or paste text before running the audit."
-    )
+    st.warning("⚠️ Please upload a PDF file or paste text before running the audit.")
   else:
-    with st.spinner("Analyzing contract for hidden traps and risks..."):
-      try:
-        client = genai.Client(api_key=api_key)
+    # Use a clear status container instead of a blocking spinner
+    status_box = st.status("Analyzing contract clauses...", expanded=True)
+    try:
+      client = genai.Client(api_key=api_key)
+      
+      status_box.update(label="Connecting to Gemini model...", state="running")
+      if pdf_bytes:
+        contents = [
+            types.Part.from_bytes(data=pdf_bytes, mime_type="application/pdf"),
+            "Analyze this contract/lease for hidden traps, unfair penalties, liability waivers, and predatory terms. Return structured JSON."
+        ]
+      else:
+        contents = f"Analyze this contract text:\n\n{contract_text}\n\nIdentify hidden traps, unfair penalties, and predatory terms."
 
-        if pdf_bytes:
-          contents = [
-              types.Part.from_bytes(
-                  data=pdf_bytes, mime_type="application/pdf"
-              ),
-              "Analyze this contract/lease for hidden traps, unfair penalties, liability waivers, and predatory terms.",
-          ]
-        else:
-          contents = f"Analyze this contract text:\n\n{contract_text}\n\nIdentify hidden traps, unfair penalties, and predatory terms."
+      status_box.update(label="Parsing legal risks and safe terms...", state="running")
+      
+      # Call Gemini with low temperature for rapid, deterministic JSON generation
+      response = client.models.generate_content(
+          model="gemini-3.8-flash",
+          contents=contents,
+          config=types.GenerateContentConfig(
+              response_mime_type="application/json",
+              response_schema=list[ClauseAnalysis],
+              temperature=0.1,
+          ),
+      )
 
-        response = client.models.generate_content(
-            model="gemini-3.8-flash",
-            contents=contents,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                response_schema=list[ClauseAnalysis],
-                temperature=0.1,
-            ),
-        )
-
-        if response and response.text:
-          results = json.loads(response.text)
-          st.session_state["audit_results"] = results
-          st.success("Audit Complete!")
-        else:
-          st.error("Received an empty response from Gemini.")
-      except Exception as e:
-        st.error(f"Audit execution failed: {str(e)}")
+      if response and response.text:
+        results = json.loads(response.text)
+        st.session_state["audit_results"] = results
+        status_box.update(label="Audit Complete!", state="complete", expanded=False)
+        st.rerun()
+      else:
+        status_box.update(label="Received empty response.", state="error")
+        st.error("Received an empty response from Gemini. Please try again.")
+        
+    except Exception as e:
+      status_box.update(label="Execution failed.", state="error")
+      st.error(f"Audit execution failed or timed out: {str(e)}")
 
 # Display Results & Negotiation Features
 if "audit_results" in st.session_state:
