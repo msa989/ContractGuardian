@@ -179,7 +179,7 @@ if run_audit:
         )
 
       response = client.models.generate_content(
-          model="gemini-3.8-flash",
+          model="gemini-1.5-flash",
           contents=contents,
           config=types.GenerateContentConfig(
               response_mime_type="application/json",
