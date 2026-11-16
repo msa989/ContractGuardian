@@ -24,3 +24,20 @@ def test_analyze_rejects_missing_text():
 def test_unknown_route_is_not_found():
     response = client.get("/api/not-a-real-route")
     assert response.status_code == 404
+
+def test_pdf_rejects_invalid_pdf_bytes():
+    response = client.post(
+        "/api/analyze-pdf",
+        files={"file": ("broken.pdf", b"not a pdf", "application/pdf")},
+    )
+    assert response.status_code == 400
+
+
+def test_valid_request_reports_missing_server_api_key(monkeypatch):
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    response = client.post(
+        "/api/analyze",
+        json={"contract_text": "This agreement requires written notice at least 180 days before the end of the lease term."},
+    )
+    assert response.status_code == 503
+    assert "GEMINI_API_KEY" in response.json()["detail"]
