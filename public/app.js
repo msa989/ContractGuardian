@@ -20,6 +20,12 @@ tabs.forEach((tab) => tab.addEventListener("click", () => {
 textArea.addEventListener("input", () => {
   count.textContent = textArea.value.length.toLocaleString() + " / 30,000";
 });
+document.getElementById("load-sample").addEventListener("click", () => {
+  textArea.value = "AUTOMATIC RENEWAL: This lease renews automatically for another 12 months unless the tenant gives written notice exactly 180 days before the end date. Late notice triggers a fee equal to four months of rent.\n\nMAINTENANCE AND LIABILITY: The tenant agrees to pay for all repairs, including structural defects and plumbing failures, regardless of cause or fault.\n\nENTRY: The landlord may enter the property at any time without prior notice.";
+  count.textContent = textArea.value.length.toLocaleString() + " / 30,000";
+  activeTab = "paste"; pastePanel.classList.remove("hidden"); uploadPanel.classList.add("hidden");
+  tabs.forEach((item) => item.classList.toggle("active", item.dataset.tab === "paste"));
+});
 pdfInput.addEventListener("change", () => {
   document.getElementById("file-name").textContent = pdfInput.files[0]?.name || "No file selected";
 });
@@ -39,7 +45,7 @@ function renderResults(data) {
     return '<article class="clause-card"><div class="clause-head"><b>' + (index + 1) + '. ' + escapeHtml(clause.clause_title || "Contract clause") + '</b><span class="risk-tag risk-' + risk.toLowerCase() + '">' + label + '</span></div><div class="clause-body"><p class="quote">“' + escapeHtml(clause.original_text) + '”</p><p><strong>What it means</strong><br>' + escapeHtml(clause.plain_language_explanation) + '</p><p><strong>Why it matters</strong><br>' + escapeHtml(clause.why_it_matters) + '</p><p><strong>Suggested next step</strong><br>' + escapeHtml(clause.negotiation_tip) + '</p><p><strong>Possible balanced wording</strong><br>' + escapeHtml(clause.suggested_revision) + '</p><p><strong>AI confidence:</strong> ' + escapeHtml(clause.confidence || "Not specified") + '</p></div></article>';
   }).join("");
   const limitations = (data.limitations || []).map((item) => '<li>' + escapeHtml(item) + '</li>').join("");
-  results.innerHTML = '<h3>Your contract review</h3><p class="summary">' + escapeHtml(data.overall_summary || "Review completed. Read each finding carefully.") + '</p><div class="risk-counts"><span class="risk-high">' + counts.HIGH + ' HIGH PRIORITY</span><span class="risk-medium">' + counts.MEDIUM + ' REVIEW</span><span class="risk-low">' + counts.LOW + ' LOWER CONCERN</span></div>' + (cards || "<p class='summary'>No specific clauses were flagged. This does not mean the contract is risk-free.</p>") + '<div class="limitations"><b>Important limitations</b><ul>' + limitations + '</ul></div><div class="result-actions"><button class="secondary-button" id="copy-report">Copy review summary</button><button class="secondary-button" id="new-review">Start a new review</button></div>';
+  results.innerHTML = '<h3>Your contract review</h3><p class="summary">' + escapeHtml(data.overall_summary || "Review completed. Read each finding carefully.") + '</p><div class="risk-counts"><span class="risk-high">' + counts.HIGH + ' HIGH PRIORITY</span><span class="risk-medium">' + counts.MEDIUM + ' REVIEW</span><span class="risk-low">' + counts.LOW + ' LOWER CONCERN</span></div>' + (cards || "<p class='summary'>No specific clauses were flagged. This does not mean the contract is risk-free.</p>") + '<div class="limitations"><b>Important limitations</b><ul>' + limitations + '</ul></div><div class="result-actions"><button class="secondary-button" id="copy-report">Copy review summary</button><button class="secondary-button" id="print-report">Print / Save PDF</button><button class="secondary-button" id="new-review">Start a new review</button></div>';
   results.classList.remove("hidden");
   document.getElementById("copy-report").addEventListener("click", async () => {
     const lines = ["CONTRACTGUARDIAN REVIEW", data.overall_summary || ""];
@@ -48,6 +54,7 @@ function renderResults(data) {
     try { await navigator.clipboard.writeText(lines.join("\n")); document.getElementById("copy-report").textContent = "Copied"; }
     catch { document.getElementById("copy-report").textContent = "Copy unavailable"; }
   });
+  document.getElementById("print-report").addEventListener("click", () => window.print());
   document.getElementById("new-review").addEventListener("click", () => {
     results.classList.add("hidden"); form.scrollIntoView({ behavior: "smooth" });
   });
