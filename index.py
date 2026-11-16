@@ -4,7 +4,6 @@ import io, json, os, time
 from collections import defaultdict, deque
 from typing import Literal
 from fastapi import FastAPI, File, HTTPException, Request, UploadFile
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from google import genai
 from google.genai import types
@@ -16,7 +15,6 @@ MAX_TEXT_CHARS = 30_000
 MAX_PDF_BYTES = 8 * 1024 * 1024
 MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
 app = FastAPI(title="ContractGuardian API", description="AI-assisted contract review. Not legal advice.", version=APP_VERSION, docs_url="/api/docs", openapi_url="/api/openapi.json")
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["GET", "POST"], allow_headers=["Content-Type"])
 _requests: dict[str, deque[float]] = defaultdict(deque)
 RATE_LIMIT, RATE_WINDOW_SECONDS = 8, 60
 
