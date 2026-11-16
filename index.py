@@ -139,7 +139,9 @@ async def analyze_pdf(request: Request, file: UploadFile = File(...), jurisdicti
     if not data.startswith(b"%PDF"):
         raise HTTPException(status_code=400, detail="The uploaded file is not a valid PDF.")
     extracted = _extract_pdf_text(data)
-    return _run_audit(extracted[:MAX_TEXT_CHARS], jurisdiction[:100], contract_type[:80])
+    if len(extracted) > MAX_TEXT_CHARS:
+        raise HTTPException(status_code=413, detail="The extracted PDF text exceeds the 30,000-character limit. Submit selected clauses or a shorter document.")
+    return _run_audit(extracted, jurisdiction[:100], contract_type[:80])
 
 @app.exception_handler(HTTPException)
 async def http_error_handler(request: Request, exc: HTTPException):
